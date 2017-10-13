@@ -1,0 +1,125 @@
+service: slackshell
+
+provider:
+  name: aws
+  runtime: nodejs4.3
+  stage: dev
+  region: ap-northeast-1
+  deploymentBucket: serverless-upload-ap-northeast-1
+  versionFunctions: false
+  variableSyntax: "\\${{([\\s\\S]+?)}}"
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - ec2:DescribeInstances
+        - ssm:SendCommand
+        - ssm:ListCommandInvocations
+        - lambda:InvokeFunction
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - "s3:List*"
+      Resource:
+        - "arn:aws:s3:::${{self:service}}-result"
+    - Effect: Allow
+      Action:
+        - "s3:Get*"
+      Resource:
+        - "arn:aws:s3:::${{self:service}}-result/*"
+    - Effect: Allow
+      Action:
+        - states:StartExecution
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - states:ListStateMachines
+      Resource: "*"
+
+functions:
+  endpoint:
+    handler: handler.endpoint
+    description: endpoint url for slack
+    timeout: 10
+    events:
+      - http:
+          path: endpoint
+          method: post
+
+  SSMKick:
+    handler: handler.ssm_kick
+    description: kick command
+    timeout: 10
+
+  SSMStatus:
+    description: ssm result check
+    handler: handler.ssm_status
+    timeout: 10
+
+  SSMResult:
+    description: print result
+    handler: handler.ssm_result
+    timeout: 10
+
+resources:
+  Description: Running shell command from slack
+  Resources:
+    ## override
+    IamRoleLambdaExecution:
+      Properties:
+        RoleName: "${{self:service}}-exec"
+
+    S3Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: "${{self:service}}-result"
+
+    IamRoleStateMachineExecution:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: "${{self:service}}-state"
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal: { Service: "states.ap-northeast-1.amazonaws.com" }
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: "${{self:service}}-exec-policy"
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - lambda:InvokeFunction
+                  Resource:
+                    - { Fn::GetAtt: [SSMKickLambdaFunction, Arn] }
+                    - { Fn::GetAtt: [SSMStatusLambdaFunction, Arn] }
+                    - { Fn::GetAtt: [SSMResultLambdaFunction, Arn] }
+
+    SlackShell:
+      Type: AWS::StepFunctions::StateMachine
+      Properties:
+        RoleArn:
+          Fn::GetAtt: [ IamRoleStateMachineExecution, Arn ]
+        DefinitionString:
+          Fn::Sub: |-
+            {
+              "Comment": "Running shell command from slack",
+              "StartAt": "JobSSMKick",
+              "States": {
+                "JobSSMKick": { "Type": "Task", "Resource": "${SSMKickLambdaFunction.Arn}",   "Next": "JobCheck" },
+                "JobCheck":   { "Type": "Task", "Resource": "${SSMStatusLambdaFunction.Arn}", "Next": "JobPoller" },
+                "JobPoller":  {
+                  "Type": "Choice",
+                  "Choices": [
+                    { "Variable": "$.CommandPlugins[0].Status", "StringEquals": "InProgress", "Next": "JobWait" },
+                    { "Variable": "$.CommandPlugins[0].Status", "StringEquals": "Success",    "Next": "JobResultOutput" },
+                    { "Variable": "$.CommandPlugins[0].Status", "StringEquals": "Failed",     "Next": "JobResultOutput" }
+                  ]
+                },
+                "JobWait":         { "Type": "Wait", "Seconds": 5, "Next": "JobCheck" },
+                "JobResultOutput": { "Type": "Task", "Resource": "${SSMResultLambdaFunction.Arn}", "Next": "Success" },
+                "Success":         { "Type": "Succeed" }
+              }
+            }
+
