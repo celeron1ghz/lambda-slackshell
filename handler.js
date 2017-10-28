@@ -67,7 +67,10 @@ module.exports.ssm_kick = (event, context, callback) => {
 module.exports.ssm_status = (event, context, callback) => {
     ssm.listCommandInvocations({ CommandId: event.CommandId, Details: true }, (err,ret) => {
         if (err) { callback(err) }
-        else     { callback(null, ret.CommandInvocations[0]) }
+        else     {
+            console.log(ret.CommandInvocations[0].Status);
+            callback(null, ret.CommandInvocations[0]);
+        }
     })
 };
 
