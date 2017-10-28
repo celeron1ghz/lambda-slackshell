@@ -67,10 +67,7 @@ module.exports.ssm_kick = (event, context, callback) => {
 module.exports.ssm_status = (event, context, callback) => {
     ssm.listCommandInvocations({ CommandId: event.CommandId, Details: true }, (err,ret) => {
         if (err) { callback(err) }
-        else     {
-            console.log(ret.CommandInvocations[0].Status);
-            callback(null, ret.CommandInvocations[0]);
-        }
+        else     { callback(null, ret.CommandInvocations[0]) }
     })
 };
 
@@ -80,7 +77,7 @@ module.exports.ssm_result = (event, context, callback) => {
 
         //const stdout = ssm_result.CommandInvocations[0].StandardOutputUrl;
         const stdout = `${event.CommandId}/${event.InstanceId}/awsrunShellScript/0.awsrunShellScript/stdout`;
-        const out_result = yield s3.getObject({ Bucket: "slaskshell-result", Key: stdout }).promise().catch(err => null);
+        const out_result = yield s3.getObject({ Bucket: "slackshell-result", Key: stdout }).promise().catch(err => null);
 
         if (out_result) {
             console.log("########## STDOUT ##########");
