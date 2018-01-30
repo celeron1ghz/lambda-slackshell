@@ -2,21 +2,20 @@
 SlackのSlash CommandでEC2上でコマンド実行を行う。
 
 
-## SETUP
-### ON serverless
+## SETUP ENVIRONMENT VARIABLES
+Nothing.
+
+
+## SETUP SERVERLESS SCRIPT
 ```
-## serverlessでセットアップ
 git clone https://github.com/celeron1ghz/lambda-slackshell.git
 cd lambda-slackshell
 sls deploy
 ```
 
-### ON slack config
-`sls deploy` で表示されるURLをSlash CommandのURLに登録する
 
-
-## REQUIRED CREDSTASH VARIABLES
-Nothing
+## SETUP Slack Slash Command
+Set **API Gateway**'s URL to **Slack's Slash Command**.
 
 
 ## SEE ALSO
