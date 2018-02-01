@@ -1,5 +1,5 @@
 # SlackShell
-SlackのSlash CommandでEC2上でコマンド実行を行う。
+Use slack's slash command as EC2's shell
 
 
 ## SETUP ENVIRONMENT VARIABLES
