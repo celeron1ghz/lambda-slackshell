@@ -2,9 +2,12 @@
   "name": "aceptessa_slack_command_runner",
   "version": "1.0.0",
   "dependencies": {
+    "co": "^4.6.0",
     "shell-escape": "^0.2.0",
     "slack-node": "^0.1.8"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "aws-sdk": "^2.444.0"
+  },
   "scripts": {}
 }
