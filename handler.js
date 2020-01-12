@@ -53,7 +53,7 @@ module.exports.ssm_kick = (event, context, callback) => {
             InstanceIds: instances,
             OutputS3Region: "ap-northeast-1",
             OutputS3BucketName: "slackshell-result",
-            Parameters: { "commands": [command], "executionTimeout": ["300"] }
+            Parameters: { "commands": [command], "executionTimeout": ["1800"] }
         }).promise();
 
         callback(null, ssm_result.Command);

@@ -2,7 +2,7 @@ service: slackshell
 
 provider:
   name: aws
-  runtime: nodejs8.10
+  runtime: nodejs10.x
   stage: dev
   region: ap-northeast-1
   deploymentBucket: serverless-upload-ap-northeast-1
@@ -117,7 +117,7 @@ resources:
                     { "Variable": "$.CommandPlugins[0].Status", "StringEquals": "Failed",     "Next": "JobResultOutput" }
                   ]
                 },
-                "JobWait":         { "Type": "Wait", "Seconds": 5, "Next": "JobCheck" },
+                "JobWait":         { "Type": "Wait", "Seconds": 30, "Next": "JobCheck" },
                 "JobResultOutput": { "Type": "Task", "Resource": "${SSMResultLambdaFunction.Arn}", "Next": "Success" },
                 "Success":         { "Type": "Succeed" }
               }
