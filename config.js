@@ -12,7 +12,7 @@ module.exports = {
     },
 
     getInstanceFilter: function(){
-        return [{ Name: "tag:aws:autoscaling:groupName", Values: ["acceptessa-as"] }];
+        return [{ Name: "tag:aws:autoscaling:groupName", Values: ["acceptessa2-as"] }];
     },
 
     getVerifyToken: function(){
